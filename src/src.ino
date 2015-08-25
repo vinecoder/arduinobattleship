@@ -102,18 +102,22 @@ void setDot(int x, int y, int status){
 /**
 * Funcao que liga/desliga uma coluna
 */
-void setColumn(int x, int status){
+void setColumn(int x,int ynot, int status){
     for (int y=0;y<8;y++){
-        m.setDot(x,y,status);
+        if (y != ynot){
+          m.setDot(x,y,status);
+        }
         delay(20);
     }
 }
 /**
 * Funcao que liga/desliga uma linha
 */
-void setRow(int y, int status){
+void setRow(int y,int xnot, int status){
     for (int x=0;x<8;x++){
-        m.setDot(x,y,status);
+        if (x != xnot){
+          m.setDot(x,y,status);
+        }
         delay(20);
     }
 }
@@ -123,15 +127,15 @@ void setRow(int y, int status){
 void pisqueCross(int x1,int y1){
 int count = 0;
   do{
-    setColumn(x1,HIGH);
-    setRow(y1,HIGH);
+    setColumn(x1,y1,HIGH);
+    setRow(y1,x1,HIGH);
     delay(50); 
-    setColumn(x1,LOW);
-    setRow(y1,LOW);
+    setColumn(x1,y1,LOW);
+    setRow(y1,x1,LOW);
     delay(50); 
   }while(count++ < 2);
-    setColumn(x1,HIGH);
-    setRow(y1,HIGH);
+    setColumn(x1,y1,HIGH);
+    setRow(y1,x1,HIGH);
     delay(50); 
 }
 /**
@@ -194,25 +198,25 @@ void incrementaX(int *x1,int *y1,int x2, int y2){
 /**
 * Funcao que navega pelo eixo X
 */
-void incrementaColuna(int *x1){
-     setColumn(*x1,LOW);
+void incrementaColuna(int *x1, int ynot){
+     setColumn(*x1,ynot, LOW);
       *x1 = *x1 + 1;
       if (*x1 > 7){
         *x1 = 0;
       }
-      setColumn(*x1,HIGH);
+      setColumn(*x1,ynot,HIGH);
 }
 
 /**
 * Funcao que navega pelo eixo X
 */
-void incrementaLinha(int *y1){
-      setRow(*y1,LOW);
+void incrementaLinha(int *y1, int xnot){
+      setRow(*y1,xnot,LOW);
       *y1 = *y1 + 1;
       if (*y1 > 7){
         *y1 = 0;
       }
-      setRow(*y1,HIGH);
+      setRow(*y1,xnot,HIGH);
 }
 
 /**
@@ -364,11 +368,11 @@ void marcacaoJogada(){
      digitalRead(btnEsquerda) == HIGH || 
      digitalRead(btnEnter) == HIGH){
       if (digitalRead(btnDireita) == HIGH) {  
-        incrementaColuna(&nav_x1);  
+        incrementaColuna(&nav_x1,nav_y1);  
         printSelecoes();
       }      
       if (digitalRead(btnEsquerda) == HIGH) {  
-        incrementaLinha(&nav_y1);  
+        incrementaLinha(&nav_y1,nav_x1);  
         printSelecoes();
       }
       if (digitalRead(btnEnter) == HIGH) {     
