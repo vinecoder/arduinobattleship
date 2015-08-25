@@ -9,13 +9,13 @@ const int btnDireita = 9;
 const int btnEnter = 10;
 const int maxInUse = 2;
 int tamanhoNavio[7] = {1,1,2,2,3,4,5};
-const char *msg[7] = {"Digite as coordendadas do Hidroaviao 1",
+char *msg[7] = {"Digite as coordendadas do Hidroaviao 1",
                             "Digite as coordendadas do Hidroaviao 2",
                             "Digite as coordendadas do Submarino 1",
                             "Digite as coordendadas do Submarino 2",
                             "Digite as coordendadas do Cruzadores",
                             "Digite as coordendadas do Encouracados",
-                            "Digite as coordendadas do Porta-avioes"}
+                            "Digite as coordendadas do Porta-avioes"};
 MaxMatrix m(data, load, clock, maxInUse);
 
 int tabuleiroA[][8] =  {{0,0,0,0,0,0,0,0},
@@ -35,7 +35,7 @@ int tabuleiroB[][8] =  {{0,0,0,0,0,0,0,0},
                        {0,0,0,0,0,0,0,0},
                        {0,0,0,0,0,0,0,0}}; 
 
-int marcacao[][4];
+int marcacao[99][4];
 int countMarcacao=0;
 int passo = 0;
 int nav_x1 = 0;
@@ -43,31 +43,10 @@ int nav_y1 = 0;
 int nav_x2 = 2;
 int nav_y2 = 0;
 
-void setup()
-{
-  Serial.begin(9600);
-  pinMode(btnEsquerda, INPUT);     
-  pinMode(btnDireita, INPUT);     
-  pinMode(btnEnter, INPUT);     
-  m.init();
-  m.setIntensity(1);
-}
-
-void loop()
-{  
-  if (passo <7) {
-    escreveLCD(msg[passo]);
-    marcacaoInicial();
-  } else if (passo == 7) {
-    //jogar();
-  } else {
-     //imprimirResultado();
-  }
-}
 
 //Funcoes Utilitarias
 
-void escreveLCD(*char msg){
+void escreveLCD(char *msg){
       Serial.println(msg);   
 }
 /**
@@ -113,27 +92,7 @@ void pisque(int x1,int y1){
   liga(x1,y1);
   delay(100);
 }
-/**
-* Funcao que navega pelo eixo X
-*/
-void incrementaX(int *x){
 
-    if (nav_x1 != nav_x2 || nav_y1 != nav_y2){
-        desliga(nav_x1,nav_y1);
-    }
-    *x++;
-    if (*x > 7){
-      *x = 0;
-      nav_y1++;
-    }
-    if (nav_y1 > 7){
-      nav_y1 = 0;
-    }
- 
-    if (nav_x1 != nav_x2 || nav_y1 != nav_y2){
-      liga(nav_x1,nav_y1);
-    }
-}
 
 
 /***
@@ -144,7 +103,7 @@ void incrementaX(int *x){
 ***/
 boolean checkAndMark(){
   boolean invalido = false;
-  int x1,x2,y1,y2;
+  int *x1,*x2,*y1,*y2;
   boolean horizontal;
 
  if (nav_x1 == nav_x2){
@@ -164,17 +123,17 @@ boolean checkAndMark(){
        return false;
   }
 
-    if (tamanhoNavio[passo] != (y2-y1)+1){
+    if (tamanhoNavio[passo] != (*y2-*y1)+1){
       invalido = true;
       Serial.println("Tamanho do navio invalido.");
       return false;
     }
 
-    for (int i = y1-1;i<=y2+1;i++){
+    for (int i = *y1-1;i<=*y2+1;i++){
       
-      if (tabuleiroB[i][x1-1] == 1 
-          || tabuleiroB[i][x1] == 1 
-          || tabuleiroB[i][x1+1] == 1 ||){
+      if (tabuleiroB[i][*x1-1] == 1 
+          || tabuleiroB[i][*x1] == 1 
+          || tabuleiroB[i][*x1+1] == 1){
         invalido = true;
         Serial.println("Posicao muito proxima a outra embarcaçao.");
         return false;
@@ -182,19 +141,22 @@ boolean checkAndMark(){
     }
     //VALIDO
     if (invalido == false){
-      marcacao[countMarcacao++] = {x1,y1,x2,y2};
-      for (int i = y1;i<=y2;i++){
+      marcacao[countMarcacao][0] = *x1;
+      marcacao[countMarcacao][1] = *y1;
+      marcacao[countMarcacao][2] = *x2;
+      marcacao[countMarcacao][3] = *y2;
+      countMarcacao++;
+     
+      for (int i = *y1;i<=*y2;i++){
         if (horizontal == true){
-          tabuleiroB[i][x1] = 1;
+          tabuleiroB[i][*x1] = 1;
         }else{
-          tabuleiroB[x1][i] = 1;
+          tabuleiroB[*x1][i] = 1;
         }
       }
         passo++; 
     }
   }
-
-}
 
 /**
 * Imprime as selecoes antes de marcar-las
@@ -245,5 +207,27 @@ void marcacaoInicial(){
  }
 }
 
+
+void setup()
+{
+  Serial.begin(9600);
+  pinMode(btnEsquerda, INPUT);     
+  pinMode(btnDireita, INPUT);     
+  pinMode(btnEnter, INPUT);     
+  m.init();
+  m.setIntensity(1);
+}
+
+void loop()
+{  
+  if (passo <7) {
+    escreveLCD(msg[passo]);
+    marcacaoInicial();
+  } else if (passo == 7) {
+    //jogar();
+  } else {
+     //imprimirResultado();
+  }
+}
 
 

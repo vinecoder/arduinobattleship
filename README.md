@@ -15,6 +15,9 @@ platformio run
 
 # EXTRAS
 
+Usages:
+  http://docs.platformio.org/en/latest/userguide/index.html#usage
+
 # if you don't have enabled auto-uploading, then you can upload firmware manually
 platformio run --target upload
 
