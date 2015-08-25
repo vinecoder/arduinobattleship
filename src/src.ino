@@ -7,6 +7,8 @@ const int clock = 6;
 const int btnEsquerda = 8;
 const int btnDireita = 9;
 const int btnEnter = 10;
+const int receptor = 11;
+const int emissor = 12;
 const int maxInUse = 2;
 int arrTiro[] = {0,1};
 int tamanhoNavio[7] = {1,1,2,2,3,4,5};
@@ -23,7 +25,7 @@ char *msg[99] = {"Digite as coordendadas do Hidroaviao 1 (1)",
                             "Fim de Jogo! Voce Perdeu!!"};
 
 MaxMatrix m(data, load, clock, maxInUse);
-
+                        //0,1,2,3,4,5,6,7
 int tabuleiroA[][8] =  {{0,0,0,0,0,0,0,0},
                        {0,0,0,0,0,0,0,0},
                        {0,0,0,0,0,0,0,0},
@@ -32,22 +34,24 @@ int tabuleiroA[][8] =  {{0,0,0,0,0,0,0,0},
                        {0,0,0,0,0,0,0,0},
                        {0,0,0,0,0,0,0,0},
                        {0,0,0,0,0,0,0,0}}; 
-int tabuleiroB[][8] =  {
-                       {1,0,1,0,1,0,1,0},
-                       {0,0,0,0,1,0,1,0},
-                       {1,0,0,0,0,0,0,0},
-                       {1,0,0,0,0,0,0,0},
-                       {1,0,0,1,1,1,1,0},
-                       {0,0,0,0,0,0,0,0}, 
-                       {0,0,0,0,0,0,0,0},
-                       {1,1,1,1,1,0,0,0}}; 
 
-char *navios[7] = {"Hidroaviao"," Hidroaviao"," Submarino ", "Submarino"," Cruzador"," Encouracado"," Porta-aviao"};
-char *navios_tipo[7] = {"A"," A"," B ", "B"," C"," D","E"};
-char *protocolo;
-int marcacao[6][4];
+int marcacao[7][4] = {{0,0,0,0},{2,0,2,0},{4,0,4,1},{6,0,6,1},{0,2,0,4},{3,4,6,4},{0,7,4,7}};//TEM QUE SER ZERADO
+int passo = 7; //TEM QUE SER ZERADO
+int tabuleiroB[][8] ={//0,1,2,3,4,5,6,7  // TEM QUE SER ZERADO
+                       {1,0,1,0,1,0,1,0},//0
+                       {0,0,0,0,1,0,1,0},//1
+                       {1,0,0,0,0,0,0,0},//2
+                       {1,0,0,0,0,0,0,0},//3
+                       {1,0,0,1,1,1,1,0},//4
+                       {0,0,0,0,0,0,0,0}, //5
+                       {0,0,0,0,0,0,0,0},//6
+                       {1,1,1,1,1,0,0,0}}; //7
+
+String navios[7] = {"Hidroaviao","Hidroaviao","Submarino ", "Submarino","Cruzador","Encouracado","Porta-aviao"};
+String navios_tipo[7] = {"A","A","B","B","C","D","E"};
+String protocolo;
+
 int countMarcacao=0;
-int passo = 7;
 int nav_x1 = 0;
 int nav_y1 = 0;
 int nav_x2 = 0;
@@ -192,17 +196,23 @@ void incrementaX(int *x1,int *y1,int x2, int y2){
 */
 void incrementaColuna(int *x1){
      setColumn(*x1,LOW);
-     *x1 = *x1 > 7 ? 0 : *x1 + 1;
-     setColumn(*x1,HIGH);
+      *x1 = *x1 + 1;
+      if (*x1 > 7){
+        *x1 = 0;
+      }
+      setColumn(*x1,HIGH);
 }
 
 /**
 * Funcao que navega pelo eixo X
 */
 void incrementaLinha(int *y1){
-     setRow(*y1,LOW);
-     *y1 = *y1 > 7 ? 0 : *y1 + 1;
-     setRow(*y1,HIGH);
+      setRow(*y1,LOW);
+      *y1 = *y1 + 1;
+      if (*y1 > 7){
+        *y1 = 0;
+      }
+      setRow(*y1,HIGH);
 }
 
 /**
@@ -370,55 +380,49 @@ void marcacaoJogada(){
 }
 
 //Função checa se o tiro acertou algum navio
-String marcaJogada() {
-  char* result;
+void marcaJogada() {
+  String result;
+  protocolo = "";
 //Percorre o tabuleiroB e verifica se a coord. esta ligada
     for (int x=0; x<=7; x++) {
       for(int y=0; y<=7; y++) {
-        Serial.print(',');
         //Se a coordenada estiver ligada, verifica se o tiro acertou algum navio
         if ((x == nav_x1) && (y == nav_y1)) {
-//          //Se o tiro acertou - Mostra msg "Acertou", senão, mostra "Agua"
+          //Se o tiro acertou - Mostra msg "Acertou", senão, mostra "Agua"
           if (tabuleiroB[y][x] == 1 ) {
             tabuleiroB[y][x] = 0; 
             navioRestante--;
-            for (int i=0; i<6; i++){
+            for (int i=0; i<8; i++){
               int x1 = navios[i][0];
               int y1 = navios[i][1];
               int x2 = navios[i][2];
               int y2 = navios[i][3];
-              result = " = Acertou";
-
-              if ( nav_x1 >= MIN(x1,x2) && nav_x2 <= MAX(x1,x2) 
-                  && nav_y1 >= MIN(y1,y2) && nav_y2 <= MAX(y1,y2))
+              result = "Acertou";
+              if ( nav_x1 >= MIN(x1,x2) && nav_x1 <= MAX(x1,x2) 
+                  && nav_y1 >= MIN(y1,y2) && nav_y1 <= MAX(y1,y2))
               {
-                  protocolo = nav_x1 + nav_y1 + navios_tipo[i];
-                  result = result + "" +  navios[i];
+                  protocolo = String("") +nav_x1 + String("") + nav_y1 + navios_tipo[i];
+                  sendProtocolo();
+                  Serial.println(result + navios[i]);
               }
             }
             //Substituir por som do Buzzer
-           
           } else {
             tabuleiroB[y][x] = 0;
             //Substituir por som do Buzzer
-            result = " = Agua";
             protocolo = nav_x1 + nav_y1 + "X";
+            sendProtocolo();
+            Serial.println("Agua");
           }
         }
       }
-      sendProtocolo();
-      Serial.println( result );
-      result = "";
     }
-    Serial.println();
-    Serial.println('-');
-    Serial.println();
-    delay(6000);
 }
 
 void sendProtocolo(){
-    //enviar protocolo via ir
-      Serial.println("Enviando protocolo: " + protocolo );
+      //enviar protocolo via ir
+      Serial.print("Enviando protocolo: ");
+      Serial.println(protocolo);
 }
 
 
