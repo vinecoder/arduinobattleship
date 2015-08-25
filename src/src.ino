@@ -8,7 +8,8 @@ const int btnEsquerda = 8;
 const int btnDireita = 9;
 const int btnEnter = 10;
 const int receptor = 11;
-const int emissor = 12;
+const int emissor = 3;
+const int buzina = 2;
 const int maxInUse = 2;
 int arrTiro[] = {0,1};
 int tamanhoNavio[7] = {1,1,2,2,3,4,5};
@@ -35,36 +36,75 @@ int tabuleiroA[][8] =  {{0,0,0,0,0,0,0,0},
                        {0,0,0,0,0,0,0,0},
                        {0,0,0,0,0,0,0,0}}; 
 
-int marcacao[7][4] = {{0,0,0,0},{2,0,2,0},{4,0,4,1},{6,0,6,1},{0,2,0,4},{3,4,6,4},{0,7,4,7}};//TEM QUE SER ZERADO
-int passo = 7; //TEM QUE SER ZERADO
+/*int passo = 7; //TEM QUE SER ZERADO
 int tabuleiroB[][8] ={//0,1,2,3,4,5,6,7  // TEM QUE SER ZERADO
-                       {1,0,1,0,1,0,1,0},//0
-                       {0,0,0,0,1,0,1,0},//1
-                       {1,0,0,0,0,0,0,0},//2
-                       {1,0,0,0,0,0,0,0},//3
-                       {1,0,0,1,1,1,1,0},//4
-                       {0,0,0,0,0,0,0,0}, //5
+                       {0,0,0,0,0,0,0,0},//0
+                       {0,0,0,0,0,0,0,0},//1
+                       {0,0,0,0,0,0,0,0},//2
+                       {0,0,0,0,0,0,0,0},//3
+                       {0,0,0,0,0,0,0,0},//4
+                       {0,0,0,0,0,0,0,0},//5
                        {0,0,0,0,0,0,0,0},//6
-                       {1,1,1,1,1,0,0,0}}; //7
+                       {0,0,0,0,0,0,0,0}}; //7
 
-String navios[7] = {"Hidroaviao","Hidroaviao","Submarino ", "Submarino","Cruzador","Encouracado","Porta-aviao"};
-String navios_tipo[7] = {"A","A","B","B","C","D","E"};
+char *tabuleiroC[][8] ={//0,1,2,3,4,5,6,7  // TEM QUE SER ZERADO
+                       {"F","F","F","F","F","F","F","F"},//"F"
+                       {"F","F","F","F","F","F","F","F"},//1
+                       {"F","F","F","F","F","F","F","F"},//2
+                       {"F","F","F","F","F","F","F","F"},//3
+                       {"F","F","F","F","F","F","F","F"},//4
+                       {"F","F","F","F","F","F","F","F"}, //5
+                       {"F","F","F","F","F","F","F","F"},//6
+                       {"F","F","F","F","F","F","F","F"}}; //7
+*/
+int passo = 7;
+
+int tabuleiroB[][8] =
+{ 
+{1,0,1,0,1,0,1,0},
+{0,0,0,0,1,0,1,0},
+{1,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0},
+{1,0,0,1,1,1,1,0},
+{0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0},
+{1,1,1,1,1,0,0,0}};
+
+char *tabuleiroC[][8] = 
+{ {"A","F","A","F","B","F","B","F"},
+  {"F","F","F","F","B","F","B","F"},
+  {"C","F","F","F","F","F","F","F"},
+  {"C","F","F","F","F","F","F","F"},
+  {"C","F","F","D","D","D","D","F"},
+  {"F","F","F","F","F","F","F","F"},
+  {"F","F","F","F","F","F","F","F"},
+  {"E","E","E","E","E","F","F","F"}};
+
+
+char *navios_tipo[7] = {"A","A","B","B","C","D","E"};
+char *agua_tipo = "F";
 String protocolo;
 
-int countMarcacao=0;
-int nav_x1 = 0;
-int nav_y1 = 0;
-int nav_x2 = 0;
-int nav_y2 = 0;
+int nav_x1 = 5;
+int nav_y1 = 2;
+int nav_x2 = 5;
+int nav_y2 = 2;
 boolean debugMode = false;
 int navioRestante = 18;
+
+void initTeste(){
+
+}
 
 void setup()
 {
   Serial.begin(9600);
   pinMode(btnEsquerda, INPUT);     
   pinMode(btnDireita, INPUT);     
-  pinMode(btnEnter, INPUT);     
+  pinMode(btnEnter, INPUT);  
+  pinMode(emissor,OUTPUT);
+  pinMode(buzina,OUTPUT);
+  pinMode(receptor,INPUT);   
   m.init();
   m.setIntensity(1);
   setDot(nav_x1,nav_y1,HIGH);
@@ -228,6 +268,7 @@ void printTabuleiroB(){
         m.setDot(x+8,y,tabuleiroB[y][x]);
   if (debugMode == true){
         Serial.print(tabuleiroB[y][x]);
+        Serial.print(tabuleiroC[y][x]);
       }
      
     }
@@ -302,14 +343,10 @@ void checkAndMark(){
 
           for (int i = MIN(nav_y1,nav_y2);i<=MAX(nav_y1,nav_y2);i++){
             tabuleiroB[i][nav_x1] = 1;
+            tabuleiroC[i][nav_x1] = navios_tipo[passo];
           } 
 
-          marcacao[countMarcacao][0] = nav_x1;
-          marcacao[countMarcacao][1] = nav_y1;
-          marcacao[countMarcacao][2] = nav_x2;
-          marcacao[countMarcacao][3] = nav_y2;
-          countMarcacao++;
-
+  
           passo++; 
         }else if (nav_y1 == nav_y2){
           
@@ -334,13 +371,9 @@ void checkAndMark(){
           
           for (int i = MIN(nav_x1,nav_x2);i<=MAX(nav_x1,nav_x2);i++){
             tabuleiroB[nav_y1][i] = 1;
+            tabuleiroC[i][nav_x1] = navios_tipo[passo];
           }
 
-          marcacao[countMarcacao][0] = nav_x1;
-          marcacao[countMarcacao][1] = nav_y1;
-          marcacao[countMarcacao][2] = nav_x2;
-          marcacao[countMarcacao][3] = nav_y2;
-          countMarcacao++;
 
           passo++; 
           
@@ -387,6 +420,7 @@ void marcacaoJogada(){
 void marcaJogada() {
   String result;
   protocolo = "";
+  Serial.println("Recebida o Tiro " + String(nav_x1)+String(",")+String(nav_y1));
 //Percorre o tabuleiroB e verifica se a coord. esta ligada
     for (int x=0; x<=7; x++) {
       for(int y=0; y<=7; y++) {
@@ -396,34 +430,58 @@ void marcaJogada() {
           if (tabuleiroB[y][x] == 1 ) {
             tabuleiroB[y][x] = 0; 
             navioRestante--;
-            for (int i=0; i<8; i++){
-              int x1 = navios[i][0];
-              int y1 = navios[i][1];
-              int x2 = navios[i][2];
-              int y2 = navios[i][3];
-              result = "Acertou";
-              if ( nav_x1 >= MIN(x1,x2) && nav_x1 <= MAX(x1,x2) 
-                  && nav_y1 >= MIN(y1,y2) && nav_y1 <= MAX(y1,y2))
-              {
-                  protocolo = String("") +nav_x1 + String("") + nav_y1 + navios_tipo[i];
-                  sendProtocolo();
-                  Serial.println(result + navios[i]);
-              }
-            }
-            //Substituir por som do Buzzer
+
+            String nome = tabuleiroC[y][x] == "A" ? "Hidroaviao":
+                          tabuleiroC[y][x] == "B" ? "Submarino":
+                          tabuleiroC[y][x] == "C" ? "Cruzador":
+                          tabuleiroC[y][x] == "D" ? "Encouracado":
+                          tabuleiroC[y][x] == "E" ? "Porta-aviao": "Agua";
+            result = "Acertou " + nome;
+
+            protocolo = String(nav_x1) + String(nav_y1) + String(tabuleiroC[y][x]);
+            buzinarAcerto();
+            sendProtocolo();
+            Serial.println(result);
+          //Substituir por som do Buzzer
           } else {
             tabuleiroB[y][x] = 0;
-            //Substituir por som do Buzzer
-            protocolo = nav_x1 + nav_y1 + "X";
+            buzinarErro();
+            protocolo = String(nav_x1) + String(nav_y1) + String(agua_tipo);
             sendProtocolo();
-            Serial.println("Agua");
+            Serial.println("Agua ");
           }
         }
       }
     }
 }
 
+void buzinarErro(){
+    digitalWrite(buzina,HIGH);
+    delay(2000);
+    digitalWrite(buzina,LOW);
+}
+
+void buzinarAcerto(){
+    digitalWrite(buzina,HIGH);
+    delay(500);
+    digitalWrite(buzina,LOW);
+    delay(500);
+    digitalWrite(buzina,HIGH);
+    delay(1000);
+    digitalWrite(buzina,LOW);
+    delay(500);
+}
+
+
 void sendProtocolo(){
+      digitalWrite(emissor,HIGH);
+      delay(200);
+      digitalWrite(emissor,LOW);
+      delay(200);
+      digitalWrite(emissor,HIGH);
+      delay(200);
+      digitalWrite(emissor,LOW);
+      delay(200);
       //enviar protocolo via ir
       Serial.print("Enviando protocolo: ");
       Serial.println(protocolo);
@@ -432,7 +490,6 @@ void sendProtocolo(){
 
 void loop()
 {  
-
   if (passo <7) {   
     escreveLCD(msg[passo]);
     while (digitalRead(btnDireita) == LOW &&
@@ -442,10 +499,17 @@ void loop()
     }
     marcacaoInicial();
   } else if (passo >= 7 && passo != 10) {
+      
+    //Inicializa
+    setColumn(nav_x1,nav_y1,HIGH);
+    setRow(nav_y1,nav_x1,HIGH);
+    
     if (navioRestante == 0){
       passo = 10;
     }
+
     escreveLCD(msg[passo]);
+
     printTabuleiroB();
     // Aguardando jogador.
      while (digitalRead(btnDireita) == LOW &&
