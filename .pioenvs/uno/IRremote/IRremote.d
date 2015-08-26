@@ -1,4 +1,5 @@
-.pioenvs/uno/src/tmp_ino_to.o: src/tmp_ino_to.cpp \
+.pioenvs/uno/IRremote/IRremote.o: .pioenvs/uno/IRremote/IRremote.cpp \
+ .pioenvs/uno/IRremote/IRremote.h .pioenvs/uno/IRremote/IRremoteInt.h \
  .pioenvs/uno/FrameworkArduino/Arduino.h \
  .pioenvs/uno/FrameworkArduino/binary.h \
  .pioenvs/uno/FrameworkArduino/WCharacter.h \
@@ -9,5 +10,4 @@
  .pioenvs/uno/FrameworkArduino/Printable.h \
  .pioenvs/uno/FrameworkArduino/USBAPI.h \
  .pioenvs/uno/FrameworkArduino/Arduino.h \
- .pioenvs/uno/FrameworkArduinoVariant/pins_arduino.h \
- .pioenvs/uno/MaxMatrix/MaxMatrix.h .pioenvs/uno/IRremote/IRremote.h
+ .pioenvs/uno/FrameworkArduinoVariant/pins_arduino.h

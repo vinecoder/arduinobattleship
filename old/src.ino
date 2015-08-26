@@ -14,7 +14,6 @@ const int buzina = 2;
 const int maxInUse = 2;
 
 IRrecv irrecv(receptor);
-IRsend irsend;
 decode_results results;
 
 int tamanhoNavio[7] = {1,1,2,2,3,4,5};
@@ -66,7 +65,7 @@ char *tabuleiroC[][8] ={//0,1,2,3,4,5,6,7  // TEM QUE SER ZERADO
                        {"F","F","F","F","F","F","F","F"},//6
                        {"F","F","F","F","F","F","F","F"}}; //7
 */
-int passo = PASSO_DEFESA;
+int passo = PASSO_ATAQUE;
 
 int tabuleiroB[][8] =
 { 
@@ -89,41 +88,13 @@ char *tabuleiroC[][8] =
   {"F","F","F","F","F","F","F","F"},
   {"E","E","E","E","E","F","F","F"}};
 
-//Ataque seleciona um item dessa matrix e envia
-//Defesa percorre essa matrix, pega as posicoes
-//Procura na matriz do tabuleiroA e tabulerioC
-//Eniva 
-const int matrixAtaque[][8] = 
-{{0x00,0x10,0x20,0x30,0x40,0x50,0x60,0x70},
- {0x01,0x11,0x21,0x31,0x41,0x51,0x61,0x71},
- {0x02,0x12,0x22,0x32,0x42,0x52,0x62,0x72},
- {0x03,0x13,0x23,0x33,0x43,0x53,0x63,0x73},
- {0x04,0x14,0x24,0x34,0x44,0x54,0x64,0x74},
- {0x05,0x15,0x25,0x35,0x45,0x55,0x65,0x75},
- {0x06,0x16,0x26,0x36,0x46,0x56,0x66,0x76},
- {0x07,0x17,0x27,0x37,0x47,0x57,0x67,0x77}};
-
-//Defesa, verifica se o tiro acertou uma dessas linhas.
- //Essa matrix deve ser preenchida no momento da marcacao.
- //Dica: 
- /*
-int matrixDefesa[][8] = 
-{{0x00A,0x10F,0x20A,0x30F,0x40B,0x50F,0x60B,0x70F},
- {0x01F,0x11F,0x21F,0x31F,0x41B,0x51F,0x61B,0x71F},
- {0x02C,0x12F,0x22F,0x32F,0x42F,0x52F,0x62F,0x72F},
- {0x03C,0x13F,0x23F,0x33F,0x43F,0x53F,0x63F,0x73F},
- {0x04C,0x14F,0x24F,0x34D,0x44D,0x54D,0x64D,0x74F},
- {0x05F,0x15F,0x25F,0x35F,0x45F,0x55F,0x65F,0x75F},
- {0x06F,0x16F,0x26F,0x36F,0x46F,0x56F,0x66F,0x76F},
- {0x07E,0x17E,0x27E,0x37E,0x47E,0x57F,0x67F,0x77F}};*/
-
 
 char *navios_tipo[7] = {"A","A","B","B","C","D","E"};
 char *agua_tipo = "F";
 String protocolo;
 
-int nav_x1 = 3;
-int nav_y1 = 4;
+int nav_x1 = 5;
+int nav_y1 = 2;
 int nav_x2 = 5;
 int nav_y2 = 2;
 boolean debugMode = false;
@@ -509,7 +480,25 @@ void resultadoAtaque(){
 
 }
 
+void defesa(){
+  if (irrecv.decode(&results)) {
+    Serial.println(results.value, HEX);
 
+    //Pega as coordenadas
+    if (results.value == 0x910){
+
+        setColumn(nav_x1,nav_y1,HIGH);
+        setRow(nav_y1,nav_x1,HIGH);
+        delay(50);
+        pisque(nav_x1,nav_y1);
+        markDefesa();
+        printTabuleiroB();
+        clearMatrixA();
+    }
+
+    irrecv.resume(); 
+  }
+}
 
 //Função checa se o tiro acertou algum navio
 void markDefesa() {
@@ -539,6 +528,7 @@ void markDefesa() {
             Serial.println(result);
             passo = PASSO_DEFESA;
           } else {
+            tabuleiroB[y][x] = 0;
             buzinarErro();
             protocolo = String(nav_x1) + String(nav_y1) + String(agua_tipo);
             sendProtocolo();
@@ -567,71 +557,25 @@ void buzinarAcerto(){
 
 }
 
+
 void sendProtocolo(){
-      //sendIr(protocolo);
+      digitalWrite(emissor,HIGH);
+      delay(200);
+      digitalWrite(emissor,LOW);
+      delay(200);
+      digitalWrite(emissor,HIGH);
+      delay(200);
+      digitalWrite(emissor,LOW);
+      delay(200);
       //enviar protocolo via ir
       Serial.print("Enviando protocolo: ");
       Serial.println(protocolo);
 }
 
-void sendIr(int msg){
-    irsend.sendSony(msg,12);
-    Serial.print("Enviando Mensagem: ");
-    Serial.println(msg,HEX);
 
-}
-void defesa(){
-  
-  escuta();
-  //Se receber 0x000 entao fica na defesa e o adversario ataca
-  if (results.value == 0x000){
-    sendIr(0x001);
-    passo=PASSO_DEFESA;
-  }
-
-  if (results.value == 0x910){
-      // Tratar o tiro, se as coordenadas do tiro estao do tamanho do tabuleiro.
-        setColumn(nav_x1,nav_y1,HIGH);
-        setRow(nav_y1,nav_x1,HIGH);
-        delay(50);
-        pisque(nav_x1,nav_y1);
-        markDefesa();
-        printTabuleiroB();
-        clearMatrixA();
-        irrecv.resume();
-    }
-}
-
-/**
-Quem inicia o jogo e quem ataca
-**/
-void startGame(){
-  results.value = NULL;
-  //Enquanto adversario nao confirmar fico escutando
-  do{
-    sendIr(0x000); // Sony TV power code
-    delay(1000);
-    escuta();  
-  }while (results.value != 0x001);
-
-  passo = PASSO_ATAQUE;
-}
-
-void  escuta(){
-    results.value = NULL;
-
-   do{
-     if (irrecv.decode(&results)) {
-        irrecv.resume(); 
-      }
-    }while(results.value == NULL);
-    
-    Serial.println("Recebido");
-    Serial.println(results.value, HEX);
-  
-}
 void loop()
 {  
+ 
 
   if (passo < PASSO_DEFESA) {   
     escreveLCD(msg[passo]);
@@ -642,16 +586,9 @@ void loop()
     }
     marcacaoInicial();
   } else if (passo == PASSO_DEFESA) {
-
-  
     escreveLCD(msg[passo]);
     printTabuleiroB();
     clearMatrixA();
-
-    if ( digitalRead(btnEnter) == HIGH){
-            startGame();
-            delay(2000);
-    }
 
     while (PASSO_DEFESA){
       defesa();
