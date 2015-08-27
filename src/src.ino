@@ -5,10 +5,11 @@ const int data = 4;
 const int load = 5;
 const int clock = 6;
 const int btnEsquerda = 8;
-const int btnDireita = 9;
+const int btnDireita = 7;//9
 const int btnEnter = 10;
 const int receptor = 11;
-const int emissor = 3;
+const int emissor = 9;//3
+const int emissorLed = 12;//3
 const int buzina = 2;
 const int maxInUse = 2;
 int arrTiro[] = {0,1};
@@ -20,10 +21,10 @@ char *msg[99] = {"Digite as coordendadas do Hidroaviao 1 (1)",
                             "Digite as coordendadas do Cruzador (3)",
                             "Digite as coordendadas do Encouracado (4)",
                             "Digite as coordendadas do Porta-aviao (5)",
-                            "Aguardando Adversario...",
+                            "Aguardando ...",
                             "Aguardando Jogada do adversario",
                             "Envie o tiro",
-                            "Fim de Jogo! Voce Perdeu!!"};
+                            "Fim de Jogo!"};
 
 MaxMatrix m(data, load, clock, maxInUse);
                         //0,1,2,3,4,5,6,7
@@ -36,7 +37,7 @@ int tabuleiroA[][8] =  {{0,0,0,0,0,0,0,0},
                        {0,0,0,0,0,0,0,0},
                        {0,0,0,0,0,0,0,0}}; 
 
-/*int passo = 7; //TEM QUE SER ZERADO
+int passo = 0; //TEM QUE SER ZERADO
 int tabuleiroB[][8] ={//0,1,2,3,4,5,6,7  // TEM QUE SER ZERADO
                        {0,0,0,0,0,0,0,0},//0
                        {0,0,0,0,0,0,0,0},//1
@@ -56,7 +57,7 @@ char *tabuleiroC[][8] ={//0,1,2,3,4,5,6,7  // TEM QUE SER ZERADO
                        {"F","F","F","F","F","F","F","F"}, //5
                        {"F","F","F","F","F","F","F","F"},//6
                        {"F","F","F","F","F","F","F","F"}}; //7
-*/
+/*
 int passo = 7;
 
 int tabuleiroB[][8] =
@@ -79,7 +80,7 @@ char *tabuleiroC[][8] =
   {"F","F","F","F","F","F","F","F"},
   {"F","F","F","F","F","F","F","F"},
   {"E","E","E","E","E","F","F","F"}};
-
+*/
 
 char *navios_tipo[7] = {"A","A","B","B","C","D","E"};
 char *agua_tipo = "F";
@@ -102,7 +103,7 @@ void setup()
   pinMode(btnEsquerda, INPUT);     
   pinMode(btnDireita, INPUT);     
   pinMode(btnEnter, INPUT);  
-  pinMode(emissor,OUTPUT);
+  pinMode(emissorLed,OUTPUT);
   pinMode(buzina,OUTPUT);
   pinMode(receptor,INPUT);   
   m.init();
@@ -323,7 +324,40 @@ void marcacaoInicial(){
   3 - Se a posicao nao corresponde ao tamanho do navio
 ***/
 void checkAndMark(){  
-        if (nav_x1 == nav_x2){
+         if (nav_x1 == nav_x2 &&  nav_y1 == nav_y2){
+
+          if (tamanhoNavio[passo] != (MAX(nav_y1,nav_y2)-MIN(nav_y1,nav_y2))+1){
+            Serial.println("Tamanho do navio invalido.");
+            return;
+          }
+
+          //verifica os vizinho em cima e em baixo
+          for (int i = MIN(nav_y1,nav_y2)-1;i<=MAX(nav_y1,nav_y2)+1;i++){
+              //Verificacao no mesmo eixo
+            if (tabuleiroB[i][nav_x1] == 1){
+              Serial.println("Posicao muito proxima a outra embarcaçao.");
+              return;
+            }
+          }
+
+          //verifica os vizinho em esquerda para direita
+          for (int i = MIN(nav_x1,nav_x2)-1;i<=MAX(nav_x1,nav_x2)+1;i++){
+
+           //Verificacao no mesmo eixo
+            if ( tabuleiroB[nav_y1][i] == 1 ){
+              Serial.println("Posicao muito proxima a outra embarcaçao.");
+              return;
+            }
+          }
+
+            for (int i = MIN(nav_y1,nav_y2);i<=MAX(nav_y1,nav_y2);i++){
+              tabuleiroB[i][nav_x1] = 1;
+              tabuleiroC[i][nav_x1] = navios_tipo[passo];
+            } 
+  
+          passo++; 
+          escreveLCD(msg[passo]);
+         }else  if (nav_x1 == nav_x2){
 
          if (tamanhoNavio[passo] != (MAX(nav_y1,nav_y2)-MIN(nav_y1,nav_y2))+1){
             Serial.println("Tamanho do navio invalido.");
@@ -332,10 +366,21 @@ void checkAndMark(){
 
           //verifica os vizinho em cima e em baixo
           for (int i = MIN(nav_y1,nav_y2)-1;i<=MAX(nav_y1,nav_y2)+1;i++){
+              //Verificacao no mesmo eixo
             if ( tabuleiroB[i][nav_x1] == 1 ){
               Serial.println("Posicao muito proxima a outra embarcaçao.");
               return;
             }
+            //Verificacao dos extremos
+            if (i != MIN(nav_y1,nav_y2)-1 && i != MAX(nav_y1,nav_y2)+1){
+              int extremoMenor = nav_x1-1 <= 7 && nav_x1-1 >=0 ?nav_x1-1 : nav_x1; 
+              int extremoMaior = nav_x1+1 <= 7 && nav_x1+1 >=0 ?nav_x1+1 : nav_x1; 
+              if ( tabuleiroB[extremoMenor][i] == 1 || tabuleiroB[extremoMaior][i] == 1 ){
+                Serial.println("Posicao muito proxima a outra embarcaçao.");
+                return;
+              }
+            }
+        
           }
 
           for (int i = MIN(nav_y1,nav_y2);i<=MAX(nav_y1,nav_y2);i++){
@@ -344,20 +389,32 @@ void checkAndMark(){
           } 
   
           passo++; 
-
+          escreveLCD(msg[passo]);
         }else if (nav_y1 == nav_y2){
           
          if (tamanhoNavio[passo] != (MAX(nav_x1,nav_x2)-MIN(nav_x1,nav_x2))+1){
             Serial.println("Tamanho do navio invalido.");
             return;
           }
-
           //verifica os vizinho em esquerda para direita
           for (int i = MIN(nav_x1,nav_x2)-1;i<=MAX(nav_x1,nav_x2)+1;i++){
+
+           //Verificacao no mesmo eixo
             if ( tabuleiroB[nav_y1][i] == 1 ){
               Serial.println("Posicao muito proxima a outra embarcaçao.");
               return;
             }
+            //Verificacao dos extremos
+            if (i != MIN(nav_x1,nav_x2)-1 && i != MAX(nav_x1,nav_x2)+1){
+              int extremoMenor = nav_y1-1 <= 7 && nav_y1-1 >=0 ?nav_y1-1 : nav_y1; 
+              int extremoMaior = nav_y1+1 <= 7 && nav_y1+1 >=0 ?nav_y1+1 : nav_y1; 
+            
+              if ( tabuleiroB[extremoMenor][i] == 1 || tabuleiroB[extremoMaior][i] == 1 ){
+                Serial.println("Posicao muito proxima a outra embarcaçao.");
+                return;
+              }
+            }
+        
           }
           
           for (int i = MIN(nav_x1,nav_x2);i<=MAX(nav_x1,nav_x2);i++){
@@ -367,7 +424,7 @@ void checkAndMark(){
 
 
           passo++; 
-          
+          escreveLCD(msg[passo]);
         }else{
          Serial.println("Posicao invalida.");
          return;
@@ -401,7 +458,8 @@ void marcacaoJogada(){
 void marcaJogada() {
   String result;
   protocolo = "";
-  Serial.println("Recebida o Tiro " + String(nav_x1)+String(",")+String(nav_y1));
+  Serial.println("");
+  Serial.println("Tiro recebido " + String(nav_x1)+String(",")+String(nav_y1));
 //Percorre o tabuleiroB e verifica se a coord. esta ligada
     for (int x=0; x<=7; x++) {
       for(int y=0; y<=7; y++) {
@@ -455,16 +513,16 @@ void buzinarAcerto(){
 
 
 void sendProtocolo(){
-      digitalWrite(emissor,HIGH);
+      digitalWrite(emissorLed,HIGH);
       delay(200);
-      digitalWrite(emissor,LOW);
+      digitalWrite(emissorLed,LOW);
       delay(200);
-      digitalWrite(emissor,HIGH);
+      digitalWrite(emissorLed,HIGH);
       delay(200);
-      digitalWrite(emissor,LOW);
+      digitalWrite(emissorLed,LOW);
       delay(200);
       //enviar protocolo via ir
-      Serial.print("Enviando protocolo: ");
+      Serial.print("Enviando protocolo via ir: ");
       Serial.println(protocolo);
 }
 
@@ -475,39 +533,39 @@ void loop()
     escreveLCD(msg[passo]);
 
     while(passo <7){
-      while (digitalRead(btnDireita) == LOW &&
-             digitalRead(btnEsquerda) == LOW &&
-             digitalRead(btnEnter) == LOW){
-
-      }
-      marcacaoInicial();
+       marcacaoInicial();
+       delay(100);
     }
   } else if (passo == 7) {
       
     escreveLCD(msg[passo]);
-     
-     while (passo == 7){
       //Inicializa
       setColumn(nav_x1,nav_y1,HIGH);
       setRow(nav_y1,nav_x1,HIGH);
-      
+      printTabuleiroB();
+     
+     while (passo == 7){
+      marcacaoJogada();
       if (navioRestante == 0){
         passo = 10;
       }
-      printTabuleiroB();
-
-      // Aguardando jogador.
+       delay(100);
+    }
+  } else if (passo == 10){ 
+    escreveLCD(msg[passo]);
+         // Aguardando jogador.
       while (digitalRead(btnDireita) == LOW &&
              digitalRead(btnEsquerda) == LOW &&
              digitalRead(btnEnter) == LOW){
 
       }
-
-      marcacaoJogada();
-    }
-  } else if (passo == 10){ 
-    escreveLCD(msg[passo]);
   }else{
     Serial.println("Fim de Jogo!");
+        // Aguardando jogador.
+      while (digitalRead(btnDireita) == LOW &&
+             digitalRead(btnEsquerda) == LOW &&
+             digitalRead(btnEnter) == LOW){
+
+      }
   }
 }
